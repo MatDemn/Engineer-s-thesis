@@ -1,0 +1,223 @@
+% Szablon dokumentu został pobrany z https://ii.uni.wroc.pl/dla-studenta/prace-dyplomowe
+\documentclass[shortabstract,inz]{iithesis}
+\usepackage[utf8]{inputenc}
+
+\polishtitle{Organizacja oraz prowadzenie gier fabularnych zdalnie z pomocą autorskiego bota na serwerze Discord}
+\englishtitle{Organizing and management of role-playing games remotly using custom made bot on Discord server}
+\polishabstract{
+Streszczenie po polsku - zostanie zamieszczone po napisaniu całości
+}
+\englishabstract{Abstract in english - It's going to be written after the whole paper is finished.}
+\author{Mateusz Zając}
+\advisor{dr Marcin Młotkowski}
+
+%\date{}
+\transcriptnum{298654}
+\advisorgen{dr Marcina Młotkowskiego}
+
+% miejsce na dodatkowe pakiety
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+% this one is mandatory to ensure biblatex working without warnings
+\usepackage{csquotes}
+\usepackage[backend=biber]{biblatex}
+\usepackage{listings}
+% miejsce na własne polecenia itd
+\graphicspath{{./pics}}
+\addbibresource{biblio.bib}
+
+\emergencystretch=1em
+
+\begin{document}
+	\chapter*{Wstęp}
+	\addcontentsline{toc}{chapter}{Wstęp}
+		Społeczności nie zawsze są w stanie spotkać się w świecie rzeczywistym, co stawia je przed wyborem sposobu zdalnej konwersacji oraz wymiany informacji. Podczas gdy proste spotkania można szybko i łatwo zorganizować na dowolnym komunikatorze, tak rozgrywanie \texttt{Sesji RPG}\cite{sesjarpg} na odległość nie jest już do końca trywialne. Szybko okazuje się, że prosty komunikator głosowy łączący uczestników bardzo ogranicza możliwości oraz jest w stanie istotnie obniżyć immersję świata przedstawionego względem rzeczywistych rozgrywek. Brakuje także programowych mechanizmów, które wspomagałyby podobne wydarzenia i wyręczały uczestników w powtarzalnych i żmudnych operacjach. 
+
+		Istotą niniejszej pracy jest wytworzenie mechanizmów, który uproszczą zarządzanie użytkownikami podczas wydarzeń organizowanych zdalnie (w szczególności \texttt{Sesji RPG}). Dzięki użyciu biblioteki \texttt{discord.py} kod używa bardzo czytelnych abstracji i ma przejrzystą strukturę. Biblioteka \texttt{SQLAlchemy} służy odpowiedniemu składowaniu danych aplikacji i umożliwia działanie projektu na wielu serwerach jednocześnie. Interfejs programu jest realizowany przy pomocy komend na kanałach tekstowych serwera Discord. Celem wytworzonego rozwiązania jest znaczne ułatwienie przeprowadzania rozgrywek zdalnie, może być również użyty z powodzeniem w różnego rodzaju spotkaniach. W toku trwania prac nad projektem wytworzono sprawnie działający system, którego użycie nie powinno sprawiać problemów po krótkim zapoznaniu. W celu udostępnienia rozwiązania dużo szerszej grupie odbiorców wymagane są prace przy optymalizacji działania części funkcji.
+		
+		[Tutaj powinien być dalszy opis pracy (ile jest rozdziałów, jaka jest ogólna struktura itd., być może w zmienionej kolejności względem powyższego tekstu)]
+		
+	\chapter{Rys teoretyczny}
+		\section{Sesja RPG}
+			Podstawą niniejszej pracy dyplomowej jest koncepcja \texttt{Sesji RPG}. Z języka angielskiego \texttt{Role-Playing Game}, czyli gra z odgrywaniem roli\footnote{Także \texttt{Gra fabularna}, \texttt{Gra wyobraźni} lub \texttt{Gra narracyjna}}. To wydarzenie, w którym uczestniczą gracze odgrywający postaci w świecie gry, Mistrz Gry (nazywany potocznie DM, GM lub MG\footnote{ang. \texttt{Dungeon Master}/\texttt{Game Master} lub w polskim przekładzie \texttt{Mistrz Gry}}) będący narratorem historii i w szczególnych przypadkach obserwatorzy. Historia najczęściej jest prowadzona według wcześniej wybranego przez Mistrza Gry scenariusza, w określonym systemie RPG\footnote{System RPG określa zasady rozgrywki, atrybuty postaci i generalny sposób rozgrywania historii.}. Odgrywanie postaci można porównać z powodzeniem do odgrywania roli przez aktora na scenie. To od uczestników w dużej mierze zależy jakość i sposób prowadzenia historii, dlatego bardzo istotnym jest, aby gracze ,,wczuli się'' w swoją postać. Głównym ograniczeniem jest tylko wyobraźnia i kreatywność zarówno uczestników, jak i Mistrza gry. Zapisany skrypt, system RPG oraz realia mają tylko naprowadzać i stanowić wskazówkę w prowadzonej przygodzie. Sposób gry jest dowolny i nie ma narzuconych z góry scen do odegrania , co często powoduje wychodzenie poza przewidziane ramy scenariusza i wymusza na prowadzącym improwizację dalszych wydarzeń. Rozgrywka dąży do zrealizowania zaplanowanego na początku przygody celu, jednak to od uczestników zależy droga, którą podążą i sposób realizacji tego celu. 
+			
+			Przykładem systemu RPG może być ten oparty o twórczość pisarza H.P. Lovecrafta - \texttt{Call of Cthulhu}. Czas i miejsce akcji to zwykle lata 20. XX wieku w Ameryce, niedługo po wprowadzeniu prohibicji. Gracze wcielają się w role badaczy, zgłębiających tajemnice świata Wielkich Przedwiecznych. W trakcie swoich przygód rozwiązują sprawy paranormalne oraz nadnaturalne i często tylko od ich działań zależą dalsze wydarzenia oraz losy postaci\footnote{Takie sesje dobrze oddają nagrania w serwisie YouTube, np. na kanale \texttt{Baniak Baniaka}\cite{baniakbaniaka}}.
+			
+		\section{Komunikator Discord}
+			W celu lepszego zrozumienia sposobu działania aplikacji oraz problemów przez nią rozwiązywanych należy przyjrzeć się lepiej komunikatorowi \texttt{Discord}. Jest to jedno z najbardziej popularnych rozwiązań komunikacji przez internet, łączące w sobie zalety zarówno \texttt{Skype}\cite{skype} jak i \texttt{TeamSpeak}\cite{teamspeak}, poprawiając wady tych rozwiązań. Umożliwia porozumiewanie się za pomocą tekstu, głosu, lecz także wideo. Chętnie wybierany przez użytkowników ze względu na dostępność użycia, nieduże użycie pamięci oraz oferowane możliwości. Dowolny użytkownik może stworzyć własny serwer o rozbudowanej strukturze oraz systemie rang użytkowników wraz z uprawnieniami. Komunikator oferuje szereg rozwiązań dostępnych także w \texttt{MS Teams}\cite{msteams} (jak np. reakcje na wiadomości użytkowników czy wklejanie grafik ze schowka). Administrator może ponadto dodać do serwera boty, które znacząco rozszerzają możliwości oraz scenariusze użytkowania. Dzięki wykorzystaniu prostych funkcjonalności wbudowanych w komunikator możemy stworzyć wiele nowych narzędzi dla użytkowników.
+		
+		\section{Biblioteka discord.py}
+			Biblioteka \texttt{discord.py} to w rzeczywistości \texttt{API Wrapper} dla Discorda napisany w języku Python. Udostępnia szereg interfejsów dla programisty, dzięki czemu główny nacisk projektu jest położony na tworzeniu funkcji serwerowych i komend, zamiast na niskopoziomowym zarządzaniu sprzętem oraz połączeniami z serwerem. Biblioteka jest łatwa w użyciu, napisana w sposób asynchroniczny oraz posiada bogatą dokumentację\cite{discordpydocs} wraz z przykładami użycia metod\cite{discordpyexamples}. Używana jest do tworzenia tzw. \texttt{botów}, automatyzujących dzięki jej użyciu funkcje udostępnione przez \texttt{Discorda}. 
+
+			Bot działając na serwerze obserwuje zdarzenia, które mają na nim miejsce oraz swoją własną skrzynkę odbiorczą wiadomości. Jeśli wiadomość zaczyna się od określonego prefiksu lub na serwerze wystąpiło określone zdarzenie, program wykonuje kod odpowiedzialny za przetworzenie takiego zdarzenia lub komendy. 
+			Każda instancja bota biblioteki discord.py posiada własną pętlę zdarzeń (event loop). Jest ona ściśle związana z pętlą zdarzeń biblioteki \texttt{asyncio} języka Python. To swojego rodzaju lista zadań do wykonania przez aplikację, po której program przełącza się, wykonując kod poszczególnych zadań. W momencie wywołania przez użytkownika komendy, tworzone jest nowe zadanie w pętli zdarzeń bota. W odpowiednim czasie zostanie ono przetworzone, a wynik zwrócony.
+			
+		\section{Programowanie asynchroniczne}
+			Większość prostych aplikacji, które są napisane w celu wykonania konkretnego zadania lub zadań mogą być z powodzeniem napisane w sposób synchroniczny. Kod wykonuje się linijka po linijce, od początku do końca, krok po kroku. Problem może wystąpić, gdy jakaś część programu korzysta z czasochłonnych operacji, które znacznie opóźniają wykonanie innych części kodu. Przykładem mogą być tutaj operacje wejścia/wyjścia czy długie wyliczenia w algorytmach, z których korzysta program. W podejściu synchronicznym blokujemy działanie do czasu zakończenia obliczeń, potem możemy wznowić dalsze wykonanie. Pierwszym pomysłem na zaradzenie sobie z takimi problemami jest programowanie wielowątkowe. Operacje czasochłonne zlecamy oddzielnym wątkom, które system operacyjny budzi co jakiś czas, przerywając wykonanie aktualnego programu. Zapanowanie jednak nad takim kodem jest stosunkowo trudne, nie mamy także kontroli nad tym w którym miejscu kod zostanie przerwany.
+		
+			Jeszcze innym pomysłem jest programowanie asynchroniczne. To programista decyduje kiedy dane zadanie może zostać zatrzymane (w Pythonie służy do tego słowo kluczowe \texttt{await}), a na jego miejsce może wejść inne. Zyskujemy wtedy dużą responsywność aplikacji, prostą koncepcję działania oraz dużo mniej potencjalnych błędów. Należy pamiętać, aby w metodach asynchronicznych nie używać \texttt{blokujących} funkcji (zatrzymujących program do czasu wykonania zadania), ponieważ odbiera to kontrolę pętli zdarzeń (kod staje się synchroniczny).
+		
+		\section{Biblioteka SQLAlchemy}
+			Biblioteka programistyczna \texttt{SQLAlchemy} służy do pracy z bazami danych typu SQL. Wspiera m.in. SQLite, MySQL, Microsoft SQL Server. Głównymi zaletami jest spamiętywanie wyników zapytań (wewnętrzny \texttt{cache}) oraz śledzenie stanu utworzonych (lub pobranych do pamięci podręcznej) obiektów zmapowanych na tabele bazy danych. Dzięki niej skupiamy się bardziej na obiektach określonych klas, niż wierszach tabel bazy danych. SQLAlchemy chroni także program przed atakami typu \texttt{SQLInjection}, ze względu na stosowanie mechanizmu \texttt{Escape Characters}. W większości przypadków korzystanie z takiej abstrakcji jest wystarczające do poprawnego i wydajnego działania. Możemy również pominąć warstwę ORM i pisać ,,surowe'' zapytania bezpośrednio do bazy danych. Wtedy niestety nie korzystamy z niektórych zalet biblioteki (np. spamiętywanie obiektów), jednak czasami nie są one potrzebne. \texttt{SQL Alchemy} sam tworzy model bazy na podstawie wskazanych modeli oraz połączeń pomiędzy nimi. Nie musimy (a nawet nie powinniśmy) tworzyć modelu sami, ponieważ może to skutkować błędami w działaniu biblioteki. Do testów aplikacji możemy używać bazy danych zapisywanej lokalnie w pliku na dysku (\texttt{sqlite}\cite{sqlite}). Dokumentacja i opis kodu\cite{sqlalchemydocs} bardzo pomagają w implementacji pożądanych funkcji. W dokumentach oprócz opisu logiki poszczególnych obiektów i funkcjonalności zostały zamieszczone również stosowne do omawianego zagadnienia przykłady. Podążając za tymi wskazówkami można nauczyć się korzystania z biblioteki od podstaw i zaimplementować ją bez większych przeszkód w danym projekcie.
+	
+	\chapter{Instalacja projektu}
+	\section{Przygotowanie aplikacji}
+	Tworzymy aplikację w bazie Discorda przy użyciu załączonego poradnika \cite{discorddev}. Ponadto, do poprawnego działania niektórych funkcji należy włączyć ,,Privileged Gateway Intents''. W tym celu należy przejść do zakładki ,,Bot'' i utworzyć nowego bota. Na nowo wygenerowanej stronie wystarczy włączyć ,,Presence Intent'' oraz ,,Server Members Intent'', a następnie zapisać zmiany. Tak przygotowaną aplikację możemy dodać do własnego serwera Discord\cite{discordserversetup}\cite{discorddev}. Po wykonaniu tych działań bot powinien pojawić się na liście użytkowników, ze statusem \texttt{Offline}.
+	
+		\section{Środowisko uruchomieniowe}
+	Wszystkie zależności niezbędne do uruchomienia aplikacji znajdują się w folderze venv (łącznie z interpreterem języka python). Otwierając projekt przy pomocy \texttt{JetBrains PyCharm}\cite{jetbrainsPycharm} możemy skorzystać z wcześniej skonfigurowanego środowiska wirtualnego, bez potrzeby instalacji dodatkowych bibliotek. Jeśli natomiast uruchamiamy z linii poleceń, za pomocą czystego interpretera języka Python, potrzebujemy zależności z Tabeli \ref{dependenciesTable}.
+	
+	\begin{table}[h!]
+		\centering
+		\begin{tabular}{l|r}
+			\textbf{Nazwa} & \textbf{Wersja}\\\cline{1-2}
+			PyNaCl & 1.4.0 \\
+			SQLAlchemy & 1.4.15 \\
+			aiohttp & 3.7.4.post0 \\
+			async-timeout & 3.0.1 \\
+			attrs & 21.2.0 \\
+			cffi & 1.14.5 \\
+			chardet & 4.0.0 \\
+			discord & 1.0.1 \\
+			discord.py[voice] & 1.7.2 \\
+			ffmpeg & 1.4 \\
+			greenlet & 1.1.0 \\
+		\end{tabular}
+		\begin{tabular}{l|r}
+			\textbf{Nazwa} & \textbf{Wersja}\\\cline{1-2}
+			idna & 3.1 \\
+			multidict & 5.1.0 \\
+			mutagen & 1.45.1 \\
+			pip & 21.1.2 \\
+			pycparser & 2.20 \\
+			setuptools & 57.0.0 \\
+			six & 1.16.0 \\
+			typing-extensions & 3.10.0.0 \\
+			yarl & 1.6.3 \\
+			youtube-dl & 2021.4.7 \\
+			\multicolumn{1}{c}{ } 
+		\end{tabular}
+		\caption{Zależności niezbędne do uruchomienia projektu}
+		\label{dependenciesTable}
+	\end{table}
+
+	Przed uruchomieniem kodu należy również dostosować ustawienia w pliku \texttt{config.json}, w folderze projektu. W miejscu \texttt{botToken} należy wpisać swój token z poradnika\cite{discorddev}. Pole \texttt{ownerId} powinno zostać uzupełnione o ID użytkownika, który ma być administratorem bota. W celu włączenia wyświetlania ID użytkownika należy:
+	\begin{enumerate}
+		\item Wejść w ustawienia konta w aplikacji Discord
+		\item Przejść do sekcji \texttt{Zaawansowane}
+		\item Włączyć \texttt{Tryb developera} oraz zapisać zmiany
+	\end{enumerate}
+	Teraz wystarczy nacisnąć prawym przyciskiem na swój profil na liście użytkowników serwera i wybrać \texttt{Kopiuj ID}.
+	Tak uzupełniony plik konfiguracyjny można zapisać i zamknąć, a następnie włączyć aplikację. Jeśli projekt załaduje się poprawnie, na konsoli wyświetli się ciąg znaków: \texttt{Application has started properly}. W celu wyświetlenia panelu pomocy, wystarczy wpisać na czacie komendę \texttt{`help}.
+		
+	\chapter{Implementacja}
+		Aplikacja jest podzielona na kilka różnych modułów, które zawierają w sobie nawiązujące do nich funkcjonalności. Dzięki użyciu mechanizmu \texttt{cogs} biblioteki \texttt{discord.py} możemy tymi modułami dowolnie zarządzać w trakcie wykonania programu (podłączać oraz odłączać je od bota podczas działania). Wszystkie moduły są składowane w folderze \texttt{cogs}.
+		Każdą z dostępnych komend poprzedzić należy znakiem ,,\`{ }'' (klawisz tyldy) jeśli prefix nie został zmieniony w pliku \texttt{config.cfg}.  
+		\section{Struktura modułu}
+		Każdy oddzielny moduł to nowa klasa, dziedzicząca po klasie \texttt{discord.ext.
+			commands.Cog}. Aby zdefiniować nowy moduł (np. o nazwie \texttt{Example}) wystarczy utworzyć klasę taką jak na Listingu \ref{exampleCog}. 
+		\lstinputlisting[label=exampleCog,caption=Przykładowy kod modułu \texttt{Example},language=Python,captionpos=b]{exampleCog.py}
+		Tak utworzony moduł wystarczy załadować za pomocą metody \texttt{load\_extension} obiektu \texttt{Bot}\footnote{Przykład można znaleźć w pliku \texttt{main.py}, gdzie w pętli są ładowane wszystkie moduły projektu z katalogu \texttt{cogs}} lub komendą \texttt{`load <nameOfModule>} (użytkownik musi być ownerem bota).  
+		
+		\section{Struktura komendy}
+		Definiowanie komend bota nie różni się znacznie od definiowania zwykłych metod asynchronicznych. Należy jedynie dodać parametr klasy \texttt{discord.ext.
+			commands.context} zaraz po parametrze \texttt{self} oraz dodać dekorator \texttt{@commands.
+			command()} nad nagłówkiem funkcji. Przykładową komendę wypisującą na czacie wiadomość ,,Hello world!'' zamieszczono w Listingu \ref{exampleCommand}
+		
+		\lstinputlisting[label=exampleCommand,caption=Przykładowa komenda wyświetlająca Hello World!,language=Python,captionpos=b]{exampleCommand.py}
+		
+		Możemy także użyć innych dekoratorów, np. aby umożliwić wykonanie komendy tylko określonym użytkownikom\footnote{Taki dekorator jest użyty np. nad funkcją \texttt{load} w pliku main.py} czy zablokować możliwość zbyt częstego wykonania danej akcji przez pojedynczego użytkownika\footnote{Przykład użycia takich dekoratorów zamieszczony w module \texttt{Session}}.
+		
+		\section{Baza danych}
+		Dzięki \texttt{SQL Alchemy} aplikacja korzysta z bazy danych działającej na silniku \texttt{SQLite} przy użyciu abstrakcji ORM (object-relational mapping). W celach implementacyjnych powstały klasy, modelujące poszczególne tabele oraz relacje, które pomiędzy nimi zachodzą. Każdy z tych modeli jest zawarty w katalogu \texttt{Models} i ma prefiks \texttt{Model}.
+		
+		Mimo, iż korzystamy z abstrakcji obiektów i klas, nadal musimy pamiętać o relacjach, które zachodzą między obiektami. Przyjrzyjmy się relacji wiele-do-wielu tabel \texttt{UserNameBackup} oraz \texttt{ServerSession}, której tabelą pośrednią jest \texttt{UserName}. Taką relację możemy modelować łącząc dwie relacje (\texttt{one-to-many} oraz \texttt{many-to-one}) (przykład na Listingu \ref{serverSession}).
+		
+		\lstinputlisting[label=serverSession,caption=Wycinek implementacji serverSession.py (tabela po stronie \texttt{one}),language=Python,captionpos=b]{serverSession.py}
+		
+		Jak widzimy powyżej, modele dziedziczą po \texttt{dbmanager.Base} (musi to być ten sam obiekt, który ,,budujemy'' w pliku \texttt{main.py}\footnote{Budowanie odbywa się w linijce \texttt{DBManager.dbmanager.Base.metadata.create\_all(bind=DBManager
+				.dbmanager.engine)}}). Większość pól klasy to obiekty \texttt{Column}, z odpowiednim typem podanym w argumencie. Po stronie relacji \texttt{one} należy utworzyć atrybut (obiekt klasy \texttt{relationship}), będący listą obiektów w relacji. Po stronie \texttt{many} dodajemy natomiast pole, będące obiektem klasy \texttt{Column}, jednak posiadające w argumencie (oprócz typu) obiekt klasy \texttt{ForeignKey}. Biblioteka zbuduje cały model bazy, jeśli ten nie istnieje.
+		
+		\lstinputlisting[label=username,caption=Wycinek implementacji username.py (tabela po stronie \texttt{many}),language=Python,captionpos=b]{username.py}
+
+		\begin{figure}[h!]
+			\centering
+			\includegraphics[width=0.90\textwidth]{dbmodels}
+			\caption{Model bazy danych całej aplikacji}
+		\end{figure}
+	
+	
+		\section{Przykłady mechanizmów aplikacji}
+			\subsection{Głosowanie na termin}
+			Jednym z większych problemów w organizacji zarówno sesji RPG jak i innych wydarzeń w większej grupie osób jest znalezienie terminu. Jeśli organizujemy spotkanie w małej liczbie osób lub nie spotykamy się za często, ręczne sprawdzenie jest rozsądnym podejściem. Sytuacja staje się tym bardziej skomplikowana, im więcej mamy typów wydarzeń i osób do sprawdzenia. Pomysłem, który jest prosty w swoich założeniach jest utworzenie ankiety, w której uczestnicy będą głosować przy pomocy emotikon Discorda. Poźniej aplikacja użyje wyników, aby podsumować ankietę i sprawdzić kiedy można zorganizować dane wydarzenie. Przykład użycia mechanizmu został zamieszczony na Rysunku \ref{sessionPoll}.
+		
+			\begin{figure}[h!]
+				\centering
+				\begin{subfigure}[b]{.49\textwidth}
+					\centering
+					\includegraphics[width=0.93\textwidth]{poll_content}
+					\caption{Ankieta oraz osiem reakcji}
+				\end{subfigure}
+				\hfill
+				\begin{subfigure}[b]{.49\textwidth}
+					\centering
+					\includegraphics[width=1\textwidth]{poll_results}
+					\caption{Podsumowanie ankiety}
+				\end{subfigure}
+				\caption{Przykładowa ankieta}
+				\label{sessionPoll}
+			\end{figure}
+	
+			\subsection{Strumieniowanie muzyki z serwisu YouTube}
+			Niekiedy podczas spotkania organizator chciałby odtworzyć dźwięk lub utwór muzyczny, który będzie słyszany przez wszystkich uczestników na kanale. Istnieją rozwiązania synchronizujące odtwarzacze użytkowników, jednak wymagają użycia dodatkowych mechanizmów poza Discordem. Opisywana aplikacja jest w stanie odtwarzać dźwięk z serwisu YouTube na bieżąco, ale także umożliwia wygodne wyszukiwanie utworów poprzez czat. Przykład zastosowania mechanizmu zamieszczono na Rysunku \ref{musicBotSearch}
+	
+			\begin{figure}[h!]
+					\includegraphics[width=1\textwidth]{musicExample}
+					\caption{Wyszukiwanie utworów oraz wybór}
+					\label{musicBotSearch}
+			\end{figure}
+	
+			\subsection{Podsumowanie rzutów kostką po wydarzeniu}
+			Aplikacja zapisuje wyniki rzutów kostką użytkowników, którzy należą do co najmniej jednej sesji. Sesja to tylko zbiór użytkowników wraz z podstawowymi informacjami o nich. System nie śledzi tego w jakiej sesji padły jakie rzuty (nie ma to sensu, ponieważ dany użytkownik nie gra więcej niż jednej sesji w danej jednostce czasu). Podsumowując rzuty korzystamy z tej struktury, aby wiedzieć jakie rzuty uwzględnić w podsumowaniu. Aby usunąć dane o rzutach, należy albo wywołać odpowiednią komendę (\texttt{`resetrolls <nameOfSession>}), lub skorzystać z komendy przywracania pseudonimów graczy po sesji (\texttt{`changenicks <nameOfSession: str> True}), która także usuwa informacje o rzutach.
+			
+			Zdefiniujmy sesję o nazwie \texttt{Sesja\_Waterfall}, która zawiera w sobie gracza \texttt{Mateusz} (\texttt{`makesession Sesja\_Waterfall 0 @Mateusz})\footnote{Konstrukcja komendy tworzenia sesji to: \texttt{`makesession <nameOfSession: str> <soundboard: bool> <*members: discord.Member>}, gdzie \texttt{nameOfSession} to nazwa sesji, \texttt{soundboard} to przełącznik reakcji dźwiękowych bota na rzuty, \texttt{members} to lista uczestników sesji.}. Po rzuceniu kilka razy kostką d100 oraz d5 (oznaczenie po literze \texttt{d} to liczba ścian kostki)\footnote{W sesjach rozgrywanych na żywo 100-ścienna kostka d100 jest zastępowana przez dwie kostki. Jedna z cyfrą dziesiątek, druga z cyfrą jedności.} możemy zobaczyć średnią tych rzutów (Rysunek \ref{rollResult}).
+			
+			\begin{figure}[!h]
+				\centering
+				\begin{subfigure}[b]{.49\textwidth}
+					\centering
+					\includegraphics[width=0.93\textwidth]{rollExample}
+					\caption{Kilka rzutów kostką d100 oraz d5}
+				\end{subfigure}
+				\hfill
+				\begin{subfigure}[b]{.49\textwidth}
+					\centering
+					\includegraphics[width=1\textwidth]{rollsResult}
+					\caption{Średni wynik po rzutach kostką}
+				\end{subfigure}
+				\caption{Przykładowa średnia rzutów kostką}
+				\label{rollResult}
+			\end{figure}
+	
+			
+	
+			Aplikacja oblicza nową średnią na podstawie wzoru i zapisuje ją z powrotem do bazy danych. Dzięki temu zużywamy minimalną ilość pamięci do spamiętywania wyników, a ilość możliwych rzutów zanim licznik się ,,przekręci'' to \(2^{63} - 1\) (maksymalna wartość pola \texttt{INTEGER} w \texttt{SQLite}).
+			
+			\begin{center}
+				\(\textrm{newAverage = } \frac{\textrm{oldAverage * oldNumberOfResults + sumOfCurrentRolls}}{\textrm{oldNumberOfResults + numberOfCurrentRolls}}\)
+			\end{center}		
+		
+	\chapter{Inne rozwiązania}	
+		Z opisanych tutaj rozwiązań korzysta wiele użytkowników na całym świecie. Są ogólnodostępne, a ich bezpłatna wersja umożliwia podstawową realizację określonych funkcji. 
+		\section{YAGPDB.xyz - bot}
+		Bot YAGPDB.xyz posiada funkcję rzutu kostką \(N\)-ścienną \(K\) razy dzięki komendzie \texttt{-roll}. Można również zdefiniować ile rzutów ma zostać wykonanych przez bota (-roll KdN). Udostępnia również komendę do tworzenia prostych ankiet. Nie zapisuje niestety średnich wartości rzutów wykonanych przez każdego użytkownika oraz nie udostępnia dodatkowych mechanizmów typowo pod sesję RPG. Ankiety są bardzo prostym mechanizmem, nie ma możliwości sprawdzenia pasującego terminu dla określonej sesji. \url{https://yagpdb.xyz/}
+		\section{Rhytm - bot}
+		Rhytm to najbardziej popularny bot muzyczny, obsługujący zarówno muzykę z URL YouTube, jak i wyszukiwanie utworów poprzez czat Discorda. Prowadzi kolejkę odtwarzania oraz wszelkie mechanizmy niezbędne dla odtwarzacza muzycznego. Służy tylko odtwarzaniu muzyki, nie posiada innych mechanizmów związanych z sesjami RPG. Opcjonalnie może służyć jako drugi bot do odtwarzania dźwięków (boty mogą odtwarzać na raz tylko jedno źródło dźwięku). \url{https://rythm.fm/}
+		\section{Roll20 - serwis internetowy}
+		Serwis Roll20 jest stworzony z myślą o prowadzeniu oraz rozgrywaniu sesji RPG. W podstawowej, bezpłatnej wersji umożliwia rzuty kostką, prowadzenie kart postaci oraz dużo więcej. Jest jednak dodatkowym serwisem (jeśli użytkownik używa Discorda do porozumiewania się), który każdy z graczy musi regularnie sprawdzać i odpowiednio ustawiać. Nie ma również możliwości zagłosowania na termin organizowanej sesji. Wiele graczy zgłaszało, że lepiej im prowadzić kartę postaci w pliku pdf na komputerze lub na kartce papieru, niż na powyższym serwisie. \url{https://app.roll20.net}
+		
+	\chapter{Zakończenie}
+	
+	\printbibliography[title=Bibliografia]
+\end{document}
